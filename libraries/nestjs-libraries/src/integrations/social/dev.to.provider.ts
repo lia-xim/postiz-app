@@ -110,38 +110,53 @@ export class DevToProvider extends SocialAbstract implements SocialProvider {
 
   @Tool({ description: 'Organization list', dataSchema: [] })
   async organizations(token: string) {
-    const orgs = await (
-      await fetch('https://dev.to/api/articles/me/all?per_page=1000', {
-        headers: {
-          'api-key': token,
-        },
-      })
-    ).json();
-
-    const allOrgs: string[] = [
-      ...new Set(
-        orgs
-          .flatMap((org: any) => org?.organization?.username)
-          .filter((f: string) => f)
-      ),
-    ] as string[];
-    const fullDetails = await Promise.all(
-      allOrgs.map(async (org: string) => {
-        return (
-          await fetch(`https://dev.to/api/organizations/${org}`, {
-            headers: {
-              'api-key': token,
-            },
-          })
-        ).json();
-      })
+    const read = async (path: string) => {
+      const response = await fetch(`https://dev.to/api/${path}`, {
+        headers: { 'api-key': token },
+      });
+      if (!response.ok) throw new Error('DEV organization lookup failed');
+      return response.json();
+    };
+    const articles = await read('articles/me/all?per_page=1000');
+    if (!Array.isArray(articles))
+      throw new Error('Invalid DEV article response');
+    const usernames = new Set<string>(
+      articles.map((a: any) => a?.organization?.username).filter(Boolean)
     );
-
-    return fullDetails.map((org: any) => ({
-      id: org.id,
-      name: org.name,
-      username: org.username,
-    }));
+    const configured = [
+      ...new Set(
+        (process.env.DEVTO_ORGANIZATIONS || '')
+          .split(',')
+          .map((s) => s.trim())
+          .filter((s) => /^[a-z0-9_-]+$/i.test(s))
+      ),
+    ];
+    if (configured.length) {
+      const user = await read('users/me');
+      if (!Number.isInteger(user.id))
+        throw new Error('Invalid DEV user response');
+      for (const username of configured) {
+        if (usernames.has(username)) continue;
+        const members = await read(
+          `organizations/${encodeURIComponent(username)}/users?per_page=1000`
+        );
+        if (
+          Array.isArray(members) &&
+          members.some((member) => member.id === user.id)
+        ) {
+          usernames.add(username);
+        }
+      }
+    }
+    const result: { id: number; name: string; username: string }[] = [];
+    for (const username of usernames) {
+      const org = await read(`organizations/${encodeURIComponent(username)}`);
+      if (!Number.isInteger(org.id) || org.username !== username) {
+        throw new Error('Invalid DEV organization response');
+      }
+      result.push({ id: org.id, name: org.name, username: org.username });
+    }
+    return result;
   }
 
   async post(
