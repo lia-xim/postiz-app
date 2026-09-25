@@ -120,6 +120,7 @@ export class PublicIntegrationsController {
     const posts = await this._postsService.getPosts(org.id, query);
     return {
       posts,
+      studioBridgeVersion: posts.studioBridgeVersion,
       // comments,
     };
   }

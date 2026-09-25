@@ -1,5 +1,6 @@
 import { PrismaRepository } from '@gitroom/nestjs-libraries/database/prisma/prisma.service';
-import { Injectable } from '@nestjs/common';
+import { ConflictException, Injectable } from '@nestjs/common';
+import { applyStudioCommand } from './studio-command';
 import { Post as PostBody } from '@gitroom/nestjs-libraries/dtos/posts/create.post.dto';
 import {
   APPROVED_SUBMIT_FOR_ORDER,
@@ -168,6 +169,10 @@ export class PostsRepository {
       select: {
         id: true,
         content: true,
+        image: true,
+        createdAt: true,
+        updatedAt: true,
+        childrenPost: { where: { deletedAt: null }, select: { id: true } },
         publishDate: true,
         releaseURL: true,
         releaseId: true,
@@ -192,27 +197,30 @@ export class PostsRepository {
       },
     });
 
-    return list.reduce((all, post) => {
-      if (!post.intervalInDays) {
-        return [...all, post];
-      }
-
-      const addMorePosts = [];
-      let startingDate = dayjs.utc(post.publishDate);
-      while (dayjs.utc(endDate).isSameOrAfter(startingDate)) {
-        if (dayjs(startingDate).isSameOrAfter(dayjs.utc(post.publishDate))) {
-          addMorePosts.push({
-            ...post,
-            publishDate: startingDate.toDate(),
-            actualDate: post.publishDate,
-          });
+    return Object.assign(
+      list.reduce((all, post) => {
+        if (!post.intervalInDays) {
+          return [...all, post];
         }
 
-        startingDate = startingDate.add(post.intervalInDays, 'days');
-      }
+        const addMorePosts = [];
+        let startingDate = dayjs.utc(post.publishDate);
+        while (dayjs.utc(endDate).isSameOrAfter(startingDate)) {
+          if (dayjs(startingDate).isSameOrAfter(dayjs.utc(post.publishDate))) {
+            addMorePosts.push({
+              ...post,
+              publishDate: startingDate.toDate(),
+              actualDate: post.publishDate,
+            });
+          }
 
-      return [...all, ...addMorePosts];
-    }, [] as any[]);
+          startingDate = startingDate.add(post.intervalInDays, 'days');
+        }
+
+        return [...all, ...addMorePosts];
+      }, [] as any[]),
+      { studioBridgeVersion: 1 }
+    );
   }
 
   async getPostsList(orgId: string, query: GetPostsListDto) {
@@ -518,6 +526,12 @@ export class PostsRepository {
     // (agent / MCP / public API); the dashboard keeps the rotate-and-sweep.
     keepGroup = false
   ) {
+    const studioResult = await applyStudioCommand(
+      this._post.model.post,
+      { state, orgId, date, body, tags, creationMethod, inter },
+      (code) => new ConflictException(code)
+    );
+    if (studioResult !== undefined) return studioResult;
     const posts: Post[] = [];
     const uuid = uuidv4();
     const group = keepGroup && body.group ? body.group : uuid;
