@@ -71,6 +71,12 @@ export class LinkedinProvider extends SocialAbstract implements SocialProvider {
     'w_organization_social',
     'r_organization_social',
   ];
+  constructor() {
+    super();
+    if (process.env.LINKEDIN_PERSONAL_SELF_SERVE === 'true') {
+      this.scopes = ['openid', 'profile', 'w_member_social'];
+    }
+  }
   override maxConcurrentJob = 2;
   refreshWait = true;
   editor = 'normal' as const;
@@ -147,13 +153,13 @@ export class LinkedinProvider extends SocialAbstract implements SocialProvider {
       })
     ).json();
 
-    const { vanityName } = await (
-      await fetch('https://api.linkedin.com/v2/me', {
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-        },
-      })
-    ).json();
+    const { vanityName } = this.scopes.includes('r_basicprofile')
+      ? await (
+          await fetch('https://api.linkedin.com/v2/me', {
+            headers: { Authorization: `Bearer ${accessToken}` },
+          })
+        ).json()
+      : { vanityName: '' };
 
     const {
       name,
@@ -183,7 +189,7 @@ export class LinkedinProvider extends SocialAbstract implements SocialProvider {
     const codeVerifier = makeSecureId(30);
     const url = `https://www.linkedin.com/oauth/v2/authorization?response_type=code&client_id=${
       process.env.LINKEDIN_CLIENT_ID
-    }&prompt=none&redirect_uri=${encodeURIComponent(
+    }&redirect_uri=${encodeURIComponent(
       `${process.env.FRONTEND_URL}/integrations/social/linkedin`
     )}&state=${state}&scope=${encodeURIComponent(this.scopes.join(' '))}`;
     return {
@@ -239,13 +245,13 @@ export class LinkedinProvider extends SocialAbstract implements SocialProvider {
       })
     ).json();
 
-    const { vanityName } = await (
-      await fetch('https://api.linkedin.com/v2/me', {
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-        },
-      })
-    ).json();
+    const { vanityName } = this.scopes.includes('r_basicprofile')
+      ? await (
+          await fetch('https://api.linkedin.com/v2/me', {
+            headers: { Authorization: `Bearer ${accessToken}` },
+          })
+        ).json()
+      : { vanityName: '' };
 
     return {
       id,
