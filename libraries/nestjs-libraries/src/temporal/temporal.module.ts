@@ -41,7 +41,13 @@ export const getTemporalModule = (
             { identifier: 'main', maxConcurrentJob: undefined },
             ...socialIntegrationList,
           ]
-            .filter((f) => f.identifier.indexOf('-') === -1)
+            // This fork owns a dedicated queue for its blog provider. Other
+            // hyphenated aliases still share their base provider worker.
+            .filter(
+              (f) =>
+                f.identifier.indexOf('-') === -1 ||
+                f.identifier === 'crawlfoundry-blog'
+            )
             .map((integration) => ({
               integration,
               taskQueue: integration.identifier.split('-')[0],
