@@ -1025,10 +1025,13 @@ const CalendarItem: FC<{
     user?.impersonate &&
     post.creationMethod &&
     post.creationMethod !== 'UNKNOWN';
-  let blogArticleTitle = '';
-  if (post.integration?.providerIdentifier === 'crawlfoundry-blog') {
+  let contentTitle = '';
+  if (['crawlfoundry-blog', 'cfglossary'].includes(
+    post.integration?.providerIdentifier || ''
+  )) {
     try {
-      blogArticleTitle = JSON.parse(post.settings || '{}').articleTitle || '';
+      const settings = JSON.parse(post.settings || '{}');
+      contentTitle = settings.articleTitle || settings.termTitle || '';
     } catch {
       // Older drafts can have malformed settings; keep their note visible.
     }
@@ -1184,7 +1187,7 @@ const CalendarItem: FC<{
           </div>
             <div className="w-full relative">
               <div className="absolute top-0 start-0 w-full text-ellipsis break-words line-clamp-1 text-start">
-                {blogArticleTitle || stripHtmlValidation('none', post.content, false, true, false) ||
+                {contentTitle || stripHtmlValidation('none', post.content, false, true, false) ||
                   t('no_content', 'no content')}
               </div>
             </div>

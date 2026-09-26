@@ -30,6 +30,7 @@ import { VkProvider } from '@gitroom/nestjs-libraries/integrations/social/vk.pro
 import { WordpressProvider } from '@gitroom/nestjs-libraries/integrations/social/wordpress.provider';
 import { ListmonkProvider } from '@gitroom/nestjs-libraries/integrations/social/listmonk.provider';
 import { CrawlFoundryBlogProvider } from '@gitroom/nestjs-libraries/integrations/social/crawlfoundry-blog.provider';
+import { CrawlFoundryGlossaryProvider } from '@gitroom/nestjs-libraries/integrations/social/cfglossary.provider';
 import { GmbProvider } from '@gitroom/nestjs-libraries/integrations/social/gmb.provider';
 import { KickProvider } from '@gitroom/nestjs-libraries/integrations/social/kick.provider';
 import { TwitchProvider } from '@gitroom/nestjs-libraries/integrations/social/twitch.provider';
@@ -72,6 +73,7 @@ export const socialIntegrationList: Array<SocialAbstract & SocialProvider> = [
   new WordpressProvider(),
   new ListmonkProvider(),
   new CrawlFoundryBlogProvider(),
+  new CrawlFoundryGlossaryProvider(),
   new MoltbookProvider(),
   new WhopProvider(),
   new SkoolProvider(),
