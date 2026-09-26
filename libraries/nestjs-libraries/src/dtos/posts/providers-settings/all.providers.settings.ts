@@ -19,6 +19,7 @@ import { WordpressDto } from '@gitroom/nestjs-libraries/dtos/posts/providers-set
 import { ListmonkDto } from '@gitroom/nestjs-libraries/dtos/posts/providers-settings/listmonk.dto';
 import { CrawlFoundryBlogDto } from '@gitroom/nestjs-libraries/dtos/posts/providers-settings/crawlfoundry-blog.dto';
 import { CrawlFoundryGlossaryDto } from '@gitroom/nestjs-libraries/dtos/posts/providers-settings/cfglossary.dto';
+import { CrawlFoundryNativeDto } from '@gitroom/nestjs-libraries/dtos/posts/providers-settings/cf-native.dto';
 import { GmbSettingsDto } from '@gitroom/nestjs-libraries/dtos/posts/providers-settings/gmb.settings.dto';
 import { FarcasterDto } from '@gitroom/nestjs-libraries/dtos/posts/providers-settings/farcaster.dto';
 import { FacebookDto } from '@gitroom/nestjs-libraries/dtos/posts/providers-settings/facebook.dto';
@@ -53,6 +54,8 @@ export type AllProvidersSettings =
   | ProviderExtension<'listmonk', ListmonkDto>
   | ProviderExtension<'crawlfoundry-blog', CrawlFoundryBlogDto>
   | ProviderExtension<'cfglossary', CrawlFoundryGlossaryDto>
+  | ProviderExtension<'cfannouncement', CrawlFoundryNativeDto>
+  | ProviderExtension<'cfnewsletter', CrawlFoundryNativeDto>
   | ProviderExtension<'gmb', GmbSettingsDto>
   | ProviderExtension<'facebook', FacebookDto>
   | ProviderExtension<'wrapcast', FarcasterDto>
@@ -95,6 +98,8 @@ export const allProviders = (setEmpty?: any) => {
     { value: ListmonkDto, name: 'listmonk' },
     { value: CrawlFoundryBlogDto, name: 'crawlfoundry-blog' },
     { value: CrawlFoundryGlossaryDto, name: 'cfglossary' },
+    { value: CrawlFoundryNativeDto, name: 'cfannouncement' },
+    { value: CrawlFoundryNativeDto, name: 'cfnewsletter' },
     { value: GmbSettingsDto, name: 'gmb' },
     { value: FarcasterDto, name: 'wrapcast' },
     { value: FacebookDto, name: 'facebook' },

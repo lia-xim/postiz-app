@@ -17,11 +17,13 @@ type Article = {
   title: string;
   slug: string;
   status: string;
+  postiz_managed?: boolean | null;
+  postiz_post_id?: string | null;
   canonical_url?: string | null;
   language?: { code?: string } | string | null;
 };
 
-const ARTICLE_FIELDS = 'id,title,slug,status,canonical_url,language.code';
+const ARTICLE_FIELDS = 'id,title,slug,status,postiz_managed,postiz_post_id,canonical_url,language.code';
 const UUID =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
@@ -221,6 +223,14 @@ export class CrawlFoundryBlogProvider
     const read = async () =>
       (await directus<{ data: Article }>(auth, path)).data;
     let article = await read();
+    if (article.postiz_managed === true &&
+      article.status !== 'scheduled' && article.status !== 'published') {
+      throw new Error('Managed article is no longer scheduled');
+    }
+    if (article.postiz_managed === true &&
+      article.postiz_post_id !== detail.id) {
+      throw new Error('Managed article is bound to a different Postiz post');
+    }
     if (article.status !== 'published') {
       if (article.status !== 'draft' && article.status !== 'scheduled') {
         throw new Error(
@@ -232,10 +242,10 @@ export class CrawlFoundryBlogProvider
         `/items/posts_translations/${encodeURIComponent(articleId)}`,
         {
           method: 'PATCH',
-          body: JSON.stringify({
-            status: 'scheduled',
-            scheduled_for: new Date().toISOString(),
-          }),
+          body: JSON.stringify(article.postiz_managed === true
+            ? { status: 'published', scheduled_for: null,
+                published_at: new Date().toISOString() }
+            : { status: 'scheduled', scheduled_for: new Date().toISOString() }),
         }
       );
       const deadline = Date.now() + 180_000;
@@ -254,6 +264,22 @@ export class CrawlFoundryBlogProvider
           'Directus scheduler did not publish the article within three minutes'
         );
       }
+    }
+    if (article.postiz_managed === true) {
+      const secret = process.env.CRAWL_FOUNDRY_REVALIDATION_SECRET;
+      if (!secret) throw new Error('Website revalidation secret is not configured');
+      const locale = typeof article.language === 'string'
+        ? article.language : article.language?.code;
+      const response = await fetch('https://crawlfoundry.com/api/directus/revalidate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ collection: 'posts_translations',
+          slugs: [{ locale, slug: article.slug }], secret }),
+        redirect: 'error',
+        signal: AbortSignal.timeout(20_000),
+      });
+      await response.body?.cancel();
+      if (!response.ok) throw new Error(`Website blog revalidation failed (${response.status})`);
     }
     return [
       {

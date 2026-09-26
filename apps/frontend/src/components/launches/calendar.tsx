@@ -1026,12 +1026,12 @@ const CalendarItem: FC<{
     post.creationMethod &&
     post.creationMethod !== 'UNKNOWN';
   let contentTitle = '';
-  if (['crawlfoundry-blog', 'cfglossary'].includes(
+  if (['crawlfoundry-blog', 'cfglossary', 'cfnewsletter', 'cfannouncement'].includes(
     post.integration?.providerIdentifier || ''
   )) {
     try {
       const settings = JSON.parse(post.settings || '{}');
-      contentTitle = settings.articleTitle || settings.termTitle || '';
+      contentTitle = settings.articleTitle || settings.termTitle || settings.recordTitle || '';
     } catch {
       // Older drafts can have malformed settings; keep their note visible.
     }

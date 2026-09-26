@@ -669,7 +669,7 @@ export class PostsService {
       });
   }
 
-  async deletePost(orgId: string, group: string) {
+  async deletePost(orgId: string, group: string, strict = false) {
     const post = await this._postRepository.deletePost(orgId, group);
 
     if (post?.id) {
@@ -692,12 +692,71 @@ export class PostsService {
             ) {
               await workflow.terminate();
             }
-          } catch (err) {}
+          } catch (err) {
+            if (strict) throw err;
+          }
         }
-      } catch (err) {}
+      } catch (err) {
+        if (strict) throw err;
+      }
     }
 
     return { error: true };
+  }
+
+  async cancelStudioPost(orgId: string, id: string, expectedUpdatedAt: string) {
+    await this._postRepository.cancelStudioPost(orgId, id, expectedUpdatedAt);
+    await this.terminatePostWorkflow(id);
+    return { postId: id, cancelled: true };
+  }
+
+  async getManagedPostStatus(orgId: string, id: string) {
+    const post = await this._postRepository.getManagedPostStatus(orgId, id);
+    return post == null ? null : {
+      postId: post.id,
+      state: post.state,
+      publishDate: post.publishDate.toISOString(),
+      updatedAt: post.updatedAt.toISOString(),
+      deleted: post.deletedAt != null,
+      provider: post.integration.providerIdentifier,
+    };
+  }
+
+  async commandCrawlFoundryContent(
+    orgId: string,
+    id: string,
+    expectedUpdatedAt: string,
+    action: 'schedule' | 'cancel' | 'now',
+    date?: string
+  ) {
+    const post = await this._postRepository.commandCrawlFoundryContent(
+      orgId, id, expectedUpdatedAt, action, date
+    );
+    if (action === 'cancel') await this.terminatePostWorkflow(id);
+    else await this.startWorkflow(
+      post.integration.providerIdentifier.split('-')[0].toLowerCase(),
+      id,
+      orgId,
+      'QUEUE',
+      true
+    );
+    return { postId: id, action };
+  }
+
+  private async terminatePostWorkflow(postId: string) {
+    const client = this._temporalService.client.getRawClient();
+    if (!client) throw new Error('Postiz workflow service is unavailable');
+    const workflows = client.workflow.list({
+      query: `postId="${postId}" AND ExecutionStatus="Running"`,
+    });
+    for await (const executionInfo of workflows) {
+      const workflow = await this._temporalService.client.getWorkflowHandle(
+        executionInfo.workflowId
+      );
+      if (workflow && (await workflow.describe()).status.name !== 'TERMINATED') {
+        await workflow.terminate();
+      }
+    }
   }
 
   async countPostsFromDay(orgId: string, date: Date) {
@@ -712,12 +771,13 @@ export class PostsService {
     taskQueue: string,
     postId: string,
     orgId: string,
-    state: State
+    state: State,
+    strict = false
   ) {
+    const client = this._temporalService.client.getRawClient();
+    if (!client && strict) throw new Error('Postiz workflow service is unavailable');
     try {
-      const workflows = this._temporalService.client
-        .getRawClient()
-        ?.workflow.list({
+      const workflows = client?.workflow.list({
           query: `postId="${postId}" AND ExecutionStatus="Running"`,
         });
 
@@ -732,18 +792,20 @@ export class PostsService {
           ) {
             await workflow.terminate();
           }
-        } catch (err) {}
+        } catch (err) {
+          if (strict) throw err;
+        }
       }
-    } catch (err) {}
+    } catch (err) {
+      if (strict) throw err;
+    }
 
     if (state === 'DRAFT') {
       return;
     }
 
     try {
-      await this._temporalService.client
-        .getRawClient()
-        ?.workflow.start('postWorkflowV112', {
+      await client?.workflow.start('postWorkflowV112', {
           workflowId: `post_${postId}`,
           taskQueue: 'main',
           workflowIdConflictPolicy: 'TERMINATE_EXISTING',
@@ -765,7 +827,9 @@ export class PostsService {
             },
           ]),
         });
-    } catch (err) {}
+    } catch (err) {
+      if (strict) throw err;
+    }
   }
 
   /**
@@ -964,12 +1028,16 @@ export class PostsService {
       }
 
       if (body.type !== 'update') {
-        this.startWorkflow(
+        const guardedStudioWrite = (post.settings as any)?.__studio !== undefined;
+        const workflow = this.startWorkflow(
           post.settings.__type.split('-')[0].toLowerCase(),
           posts[0].id,
           orgId,
-          posts[0].state
-        ).catch((err) => {});
+          posts[0].state,
+          guardedStudioWrite
+        );
+        if (guardedStudioWrite) await workflow;
+        else workflow.catch((err) => {});
       }
 
       Sentry.metrics.count('post_created', 1);

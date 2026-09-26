@@ -16,6 +16,7 @@ type Term = {
   id: string;
   status: string;
   discovery_released_at?: string | null;
+  postiz_post_id?: string | null;
 };
 type Translation = {
   id: string;
@@ -254,10 +255,13 @@ export class CrawlFoundryGlossaryProvider
     const auth = storedCredentials(integration);
     const term = (await directus<{ data: Term }>(
       auth,
-      `/items/glossary_entries/${encodeURIComponent(termId)}?fields=id,status,discovery_released_at`
+      `/items/glossary_entries/${encodeURIComponent(termId)}?fields=id,status,discovery_released_at,postiz_post_id`
     )).data;
     if (term.status !== 'active') {
       throw new Error('The selected glossary term is not active');
+    }
+    if (term.postiz_post_id != null && term.postiz_post_id !== detail.id) {
+      throw new Error('Glossary term is bound to a different Postiz post');
     }
     const query = new URLSearchParams({
       fields: TRANSLATION_FIELDS,

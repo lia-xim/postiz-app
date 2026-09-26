@@ -36,6 +36,7 @@ import WordpressProvider from '@gitroom/frontend/components/new-launch/providers
 import ListmonkProvider from '@gitroom/frontend/components/new-launch/providers/listmonk/listmonk.provider';
 import CrawlFoundryBlogProvider from '@gitroom/frontend/components/new-launch/providers/crawlfoundry-blog/crawlfoundry-blog.provider';
 import CrawlFoundryGlossaryProvider from '@gitroom/frontend/components/new-launch/providers/cfglossary/cfglossary.provider';
+import CrawlFoundryNativeProvider from '@gitroom/frontend/components/new-launch/providers/cf-native/cf-native.provider';
 import GmbProvider from '@gitroom/frontend/components/new-launch/providers/gmb/gmb.provider';
 import MoltbookProvider from '@gitroom/frontend/components/new-launch/providers/moltbook/moltbook.provider';
 import SkoolProvider from '@gitroom/frontend/components/new-launch/providers/skool/skool.provider';
@@ -167,6 +168,14 @@ export const Providers = [
   {
     identifier: 'cfglossary',
     component: CrawlFoundryGlossaryProvider,
+  },
+  {
+    identifier: 'cfnewsletter',
+    component: CrawlFoundryNativeProvider,
+  },
+  {
+    identifier: 'cfannouncement',
+    component: CrawlFoundryNativeProvider,
   },
   {
     identifier: 'gmb',

@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { applyStudioCommand } from '../libraries/nestjs-libraries/src/database/prisma/posts/studio-command.ts';
+import { applyStudioCommand, cancelStudioCommand, applyCrawlFoundryContentCommand } from '../libraries/nestjs-libraries/src/database/prisma/posts/studio-command.ts';
 
 const id = `studio-${'a'.repeat(64)}`;
 const updatedAt = '2026-09-11T12:00:00.000Z';
@@ -108,4 +108,91 @@ test('publication requires an existing version and queues only after conditional
     input,
     conflict
   );
+});
+
+test('managed schedule creates a queue item and reschedules only the known revision', async () => {
+  const fresh = command();
+  fresh.state = 'schedule';
+  fresh.date = new Date(Date.now() + 120_000).toISOString();
+  await applyStudioCommand(
+    {
+      create: async ({ data }) => {
+        assert.equal(data.id, id);
+        assert.equal(data.state, 'QUEUE');
+        return { id };
+      },
+    },
+    fresh,
+    conflict
+  );
+  const revision = command(updatedAt);
+  revision.state = 'schedule';
+  revision.date = fresh.date;
+  await applyStudioCommand(
+    {
+      update: async ({ where, data }) => {
+        assert.deepEqual(where.state, { in: ['DRAFT', 'QUEUE'] });
+        assert.equal(where.updatedAt.toISOString(), updatedAt);
+        assert.equal(data.state, 'QUEUE');
+        return { id };
+      },
+    },
+    revision,
+    conflict
+  );
+});
+
+test('managed schedule refuses a due or past timestamp', async () => {
+  const input = command();
+  input.state = 'schedule';
+  await assert.rejects(applyStudioCommand({}, input, conflict), {
+    message: 'studio_invalid_command',
+  });
+});
+
+test('managed cancellation requires an unchanged future queue item', async () => {
+  await cancelStudioCommand(
+    {
+      update: async ({ where, data }) => {
+        assert.equal(where.id, id);
+        assert.equal(where.organizationId, 'org-1');
+        assert.equal(where.group, id);
+        assert.equal(where.updatedAt.toISOString(), updatedAt);
+        assert.equal(where.state, 'QUEUE');
+        assert.ok(where.publishDate.gt > new Date());
+        assert.ok(data.deletedAt instanceof Date);
+        return { id };
+      },
+    },
+    { orgId: 'org-1', id, expectedUpdatedAt: updatedAt },
+    conflict
+  );
+  await assert.rejects(
+    cancelStudioCommand(
+      { update: async () => { throw { code: 'P2025' }; } },
+      { orgId: 'org-1', id, expectedUpdatedAt: updatedAt },
+      conflict
+    ),
+    { message: 'studio_revision_conflict' }
+  );
+});
+
+test('existing Crawl Foundry queue item is revised only with its live revision and provider', async () => {
+  const date = new Date(Date.now() + 120_000).toISOString();
+  await applyCrawlFoundryContentCommand(
+    { update: async ({ where, data }) => {
+      assert.equal(where.organizationId, 'org-1');
+      assert.equal(where.updatedAt.toISOString(), updatedAt);
+      assert.deepEqual(where.integration.providerIdentifier.in, ['crawlfoundry-blog', 'cfglossary']);
+      assert.equal(data.publishDate.toISOString(), date);
+      return { id: 'legacy-1', group: 'group-1' };
+    } },
+    { orgId: 'org-1', id: 'legacy-1', expectedUpdatedAt: updatedAt,
+      action: 'schedule', date }, conflict
+  );
+  await assert.rejects(applyCrawlFoundryContentCommand(
+    { update: async () => { throw { code: 'P2025' }; } },
+    { orgId: 'org-1', id: 'legacy-1', expectedUpdatedAt: updatedAt,
+      action: 'cancel' }, conflict
+  ), { message: 'cf_revision_conflict' });
 });

@@ -215,6 +215,39 @@ export class PublicIntegrationsController {
     return this._postsService.deletePost(org.id, getPostById.group);
   }
 
+  @Post('/posts/:id/studio-cancel')
+  cancelStudioPost(
+    @GetOrgFromRequest() org: Organization,
+    @Param('id') id: string,
+    @Body('expectedUpdatedAt') expectedUpdatedAt: string
+  ) {
+    Sentry.metrics.count('public_api-request', 1);
+    return this._postsService.cancelStudioPost(org.id, id, expectedUpdatedAt);
+  }
+
+  @Get('/posts/:id/managed-status')
+  getManagedPostStatus(
+    @GetOrgFromRequest() org: Organization,
+    @Param('id') id: string
+  ) {
+    Sentry.metrics.count('public_api-request', 1);
+    return this._postsService.getManagedPostStatus(org.id, id);
+  }
+
+  @Post('/posts/:id/cf-command')
+  commandCrawlFoundryContent(
+    @GetOrgFromRequest() org: Organization,
+    @Param('id') id: string,
+    @Body('expectedUpdatedAt') expectedUpdatedAt: string,
+    @Body('action') action: 'schedule' | 'cancel' | 'now',
+    @Body('date') date?: string
+  ) {
+    Sentry.metrics.count('public_api-request', 1);
+    return this._postsService.commandCrawlFoundryContent(
+      org.id, id, expectedUpdatedAt, action, date
+    );
+  }
+
   @Delete('/posts/group/:group')
   deletePostByGroup(
     @GetOrgFromRequest() org: Organization,

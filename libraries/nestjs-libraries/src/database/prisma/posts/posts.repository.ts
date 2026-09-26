@@ -1,6 +1,6 @@
 import { PrismaRepository } from '@gitroom/nestjs-libraries/database/prisma/prisma.service';
 import { ConflictException, Injectable } from '@nestjs/common';
-import { applyStudioCommand } from './studio-command';
+import { applyStudioCommand, cancelStudioCommand, applyCrawlFoundryContentCommand } from './studio-command';
 import { Post as PostBody } from '@gitroom/nestjs-libraries/dtos/posts/create.post.dto';
 import {
   APPROVED_SUBMIT_FOR_ORDER,
@@ -344,6 +344,51 @@ export class PostsRepository {
         id: true,
       },
     });
+  }
+
+  cancelStudioPost(orgId: string, id: string, expectedUpdatedAt: string) {
+    return cancelStudioCommand(
+      this._post.model.post,
+      { orgId, id, expectedUpdatedAt },
+      (code) => new ConflictException(code)
+    );
+  }
+
+  getManagedPostStatus(orgId: string, id: string) {
+    return this._post.model.post.findFirst({
+      where: {
+        id,
+        organizationId: orgId,
+        integration: {
+          organizationId: orgId,
+          providerIdentifier: { in: [
+            'crawlfoundry-blog', 'cfglossary', 'cfnewsletter', 'cfannouncement',
+          ] },
+        },
+      },
+      select: {
+        id: true,
+        state: true,
+        publishDate: true,
+        updatedAt: true,
+        deletedAt: true,
+        integration: { select: { providerIdentifier: true } },
+      },
+    });
+  }
+
+  commandCrawlFoundryContent(
+    orgId: string,
+    id: string,
+    expectedUpdatedAt: string,
+    action: 'schedule' | 'cancel' | 'now',
+    date?: string
+  ) {
+    return applyCrawlFoundryContentCommand(
+      this._post.model.post,
+      { orgId, id, expectedUpdatedAt, action, date },
+      (code) => new ConflictException(code)
+    );
   }
 
   getPostsByGroup(orgId: string, group: string) {
