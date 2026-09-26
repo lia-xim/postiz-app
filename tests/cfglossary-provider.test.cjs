@@ -75,7 +75,8 @@ function mockFetch({ releasedAt = null, noIndex = false, parentStatus = 'active'
     if (url.endsWith('/api/directus/revalidate')) {
       return response({ revalidatedPaths: ['/de/glossary/keyword-placement'] });
     }
-    if (url.endsWith('/de/glossary/keyword-placement')) {
+    if (url.endsWith('/de/glossary/keyword-placement') ||
+        url.endsWith('/glossary/keyword-placement')) {
       return new Response('<meta name="robots" content="index, follow">');
     }
     throw new Error(`unexpected request: ${url}`);
@@ -95,6 +96,7 @@ test('releases one active term, revalidates the website, and returns its URL', a
   assert.equal(result[0].releaseURL, 'https://crawlfoundry.com/de/glossary/keyword-placement');
   assert.equal(calls.filter((call) => call.method === 'PATCH').length, 1);
   assert.equal(calls.filter((call) => call.method === 'POST').length, 1);
+  assert.ok(calls.some((call) => call.url === 'https://crawlfoundry.com/glossary/keyword-placement'));
   assert.ok(calls.find((call) => call.method === 'PATCH').body.includes('discovery_released_at'));
 });
 

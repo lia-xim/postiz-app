@@ -120,6 +120,9 @@ async function websiteReleased(url: string): Promise<boolean> {
       signal: AbortSignal.timeout(20_000),
     });
     if (!response.ok) return false;
+    if (response.headers.get('x-robots-tag')?.toLowerCase().includes('noindex')) {
+      return false;
+    }
     const html = await response.text();
     const robots = html.match(/<meta\s+name=["']robots["']\s+content=["']([^"']+)["']/i)?.[1];
     return robots != null && !robots.toLowerCase().includes('noindex');
@@ -277,6 +280,7 @@ export class CrawlFoundryGlossaryProvider
       throw new Error('Glossary release is blocked by CMS SEO settings');
     }
     const url = publicUrl(german);
+    const englishUrl = publicUrl(english);
     if (!term.discovery_released_at) {
       await directus(
         auth,
@@ -293,7 +297,11 @@ export class CrawlFoundryGlossaryProvider
     await revalidateWebsite(translations);
     const deadline = Date.now() + 180_000;
     while (Date.now() < deadline) {
-      if (await websiteReleased(url)) {
+      const [germanReleased, englishReleased] = await Promise.all([
+        websiteReleased(url),
+        websiteReleased(englishUrl),
+      ]);
+      if (germanReleased && englishReleased) {
         return [{
           id: detail.id,
           postId: termId,
