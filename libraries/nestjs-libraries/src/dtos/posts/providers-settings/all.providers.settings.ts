@@ -13,6 +13,8 @@ import { InstagramDto } from '@gitroom/nestjs-libraries/dtos/posts/providers-set
 import { LinkedinDto } from '@gitroom/nestjs-libraries/dtos/posts/providers-settings/linkedin.dto';
 import { IsIn } from 'class-validator';
 import { MediumSettingsDto } from '@gitroom/nestjs-libraries/dtos/posts/providers-settings/medium.settings.dto';
+import { Blog2SocialMediumDto } from '@gitroom/nestjs-libraries/dtos/posts/providers-settings/blog2social-medium.dto';
+import { Blog2SocialRedditDto } from '@gitroom/nestjs-libraries/dtos/posts/providers-settings/blog2social-reddit.dto';
 import { DevToSettingsDto } from '@gitroom/nestjs-libraries/dtos/posts/providers-settings/dev.to.settings.dto';
 import { HashnodeSettingsDto } from '@gitroom/nestjs-libraries/dtos/posts/providers-settings/hashnode.settings.dto';
 import { WordpressDto } from '@gitroom/nestjs-libraries/dtos/posts/providers-settings/wordpress.dto';
@@ -48,6 +50,8 @@ export type AllProvidersSettings =
   | ProviderExtension<'instagram', InstagramDto>
   | ProviderExtension<'instagram-standalone', InstagramDto>
   | ProviderExtension<'medium', MediumSettingsDto>
+  | ProviderExtension<'blog2social-medium', Blog2SocialMediumDto>
+  | ProviderExtension<'blog2social-reddit', Blog2SocialRedditDto>
   | ProviderExtension<'devto', DevToSettingsDto>
   | ProviderExtension<'hashnode', HashnodeSettingsDto>
   | ProviderExtension<'wordpress', WordpressDto>
@@ -92,6 +96,8 @@ export const allProviders = (setEmpty?: any) => {
     { value: InstagramDto, name: 'instagram' },
     { value: InstagramDto, name: 'instagram-standalone' },
     { value: MediumSettingsDto, name: 'medium' },
+    { value: Blog2SocialMediumDto, name: 'blog2social-medium' },
+    { value: Blog2SocialRedditDto, name: 'blog2social-reddit' },
     { value: DevToSettingsDto, name: 'devto' },
     { value: WordpressDto, name: 'wordpress' },
     { value: HashnodeSettingsDto, name: 'hashnode' },

@@ -8,6 +8,8 @@ import { RedditProvider } from '@gitroom/nestjs-libraries/integrations/social/re
 import { DevToProvider } from '@gitroom/nestjs-libraries/integrations/social/dev.to.provider';
 import { HashnodeProvider } from '@gitroom/nestjs-libraries/integrations/social/hashnode.provider';
 import { MediumProvider } from '@gitroom/nestjs-libraries/integrations/social/medium.provider';
+import { Blog2SocialMediumProvider } from '@gitroom/nestjs-libraries/integrations/social/blog2social-medium.provider';
+import { Blog2SocialRedditProvider } from '@gitroom/nestjs-libraries/integrations/social/blog2social-reddit.provider';
 import { FacebookProvider } from '@gitroom/nestjs-libraries/integrations/social/facebook.provider';
 import { InstagramProvider } from '@gitroom/nestjs-libraries/integrations/social/instagram.provider';
 import { YoutubeProvider } from '@gitroom/nestjs-libraries/integrations/social/youtube.provider';
@@ -69,6 +71,8 @@ export const socialIntegrationList: Array<SocialAbstract & SocialProvider> = [
   new NostrProvider(),
   new VkProvider(),
   new MediumProvider(),
+  new Blog2SocialMediumProvider(),
+  new Blog2SocialRedditProvider(),
   new DevToProvider(),
   new HashnodeProvider(),
   new WordpressProvider(),

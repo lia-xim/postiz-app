@@ -5,6 +5,8 @@ import XProvider from '@gitroom/frontend/components/new-launch/providers/x/x.pro
 import LinkedinProvider from '@gitroom/frontend/components/new-launch/providers/linkedin/linkedin.provider';
 import RedditProvider from '@gitroom/frontend/components/new-launch/providers/reddit/reddit.provider';
 import MediumProvider from '@gitroom/frontend/components/new-launch/providers/medium/medium.provider';
+import Blog2SocialMediumProvider from '@gitroom/frontend/components/new-launch/providers/blog2social-medium/blog2social-medium.provider';
+import Blog2SocialRedditProvider from '@gitroom/frontend/components/new-launch/providers/blog2social-reddit/blog2social-reddit.provider';
 import HashnodeProvider from '@gitroom/frontend/components/new-launch/providers/hashnode/hashnode.provider';
 import FacebookProvider from '@gitroom/frontend/components/new-launch/providers/facebook/facebook.provider';
 import InstagramProvider from '@gitroom/frontend/components/new-launch/providers/instagram/instagram.collaborators';
@@ -68,6 +70,14 @@ export const Providers = [
   {
     identifier: 'medium',
     component: MediumProvider,
+  },
+  {
+    identifier: 'blog2social-medium',
+    component: Blog2SocialMediumProvider,
+  },
+  {
+    identifier: 'blog2social-reddit',
+    component: Blog2SocialRedditProvider,
   },
   {
     identifier: 'hashnode',
