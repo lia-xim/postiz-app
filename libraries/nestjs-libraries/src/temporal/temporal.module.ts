@@ -41,12 +41,13 @@ export const getTemporalModule = (
             { identifier: 'main', maxConcurrentJob: undefined },
             ...socialIntegrationList,
           ]
-            // This fork owns a dedicated queue for its blog provider. Other
-            // hyphenated aliases still share their base provider worker.
+            // Keep one worker for each queue introduced by this fork. Both
+            // Blog2Social providers use the same blog2social activity queue.
             .filter(
               (f) =>
                 f.identifier.indexOf('-') === -1 ||
-                f.identifier === 'crawlfoundry-blog'
+                f.identifier === 'crawlfoundry-blog' ||
+                f.identifier === 'blog2social-medium'
             )
             .map((integration) => ({
               integration,
