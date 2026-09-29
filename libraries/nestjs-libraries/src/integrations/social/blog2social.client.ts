@@ -51,7 +51,7 @@ export async function blog2SocialRequest(
 }
 
 export async function connectedAccount(
-  network: 'Medium' | 'Reddit',
+  network: 'Medium' | 'Reddit' | 'Google Business Profile',
   rawId: string
 ): Promise<Connection> {
   if (!/^[1-9][0-9]{0,14}$/.test(rawId)) {
@@ -64,9 +64,12 @@ export async function connectedAccount(
   const found = listed.find((entry: unknown) => {
     if (!entry || typeof entry !== 'object') return false;
     const value = entry as Record<string, unknown>;
+    const matchesNetwork = network === 'Google Business Profile'
+      ? value.name === 'GoogleBusinessProfile' && value.network_id === 18
+      : value.name === network;
     return (
       value.client_user_network_id === Number(rawId) &&
-      value.name === network &&
+      matchesNetwork &&
       typeof value.network_id === 'number' &&
       typeof value.display_name === 'string'
     );

@@ -112,6 +112,7 @@ export class NoAuthIntegrationsController {
             code: body.code,
             codeVerifier: getCodeVerifier,
             refresh: body.refresh,
+            organizationId: org.id,
           },
           details ? JSON.parse(details) : undefined
         );

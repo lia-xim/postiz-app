@@ -41,7 +41,7 @@ export const getTemporalModule = (
             { identifier: 'main', maxConcurrentJob: undefined },
             ...socialIntegrationList,
           ]
-            // Keep one worker for each queue introduced by this fork. Both
+            // Keep one worker for each queue introduced by this fork. All
             // Blog2Social providers use the same blog2social activity queue.
             .filter(
               (f) =>

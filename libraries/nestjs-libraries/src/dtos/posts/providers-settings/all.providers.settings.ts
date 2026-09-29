@@ -15,6 +15,7 @@ import { IsIn } from 'class-validator';
 import { MediumSettingsDto } from '@gitroom/nestjs-libraries/dtos/posts/providers-settings/medium.settings.dto';
 import { Blog2SocialMediumDto } from '@gitroom/nestjs-libraries/dtos/posts/providers-settings/blog2social-medium.dto';
 import { Blog2SocialRedditDto } from '@gitroom/nestjs-libraries/dtos/posts/providers-settings/blog2social-reddit.dto';
+import { Blog2SocialGmbDto } from '@gitroom/nestjs-libraries/dtos/posts/providers-settings/blog2social-gmb.dto';
 import { DevToSettingsDto } from '@gitroom/nestjs-libraries/dtos/posts/providers-settings/dev.to.settings.dto';
 import { HashnodeSettingsDto } from '@gitroom/nestjs-libraries/dtos/posts/providers-settings/hashnode.settings.dto';
 import { WordpressDto } from '@gitroom/nestjs-libraries/dtos/posts/providers-settings/wordpress.dto';
@@ -52,6 +53,7 @@ export type AllProvidersSettings =
   | ProviderExtension<'medium', MediumSettingsDto>
   | ProviderExtension<'blog2social-medium', Blog2SocialMediumDto>
   | ProviderExtension<'blog2social-reddit', Blog2SocialRedditDto>
+  | ProviderExtension<'blog2social-gmb', Blog2SocialGmbDto>
   | ProviderExtension<'devto', DevToSettingsDto>
   | ProviderExtension<'hashnode', HashnodeSettingsDto>
   | ProviderExtension<'wordpress', WordpressDto>
@@ -98,6 +100,7 @@ export const allProviders = (setEmpty?: any) => {
     { value: MediumSettingsDto, name: 'medium' },
     { value: Blog2SocialMediumDto, name: 'blog2social-medium' },
     { value: Blog2SocialRedditDto, name: 'blog2social-reddit' },
+    { value: Blog2SocialGmbDto, name: 'blog2social-gmb' },
     { value: DevToSettingsDto, name: 'devto' },
     { value: WordpressDto, name: 'wordpress' },
     { value: HashnodeSettingsDto, name: 'hashnode' },

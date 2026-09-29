@@ -11,6 +11,7 @@ export interface IAuthenticator {
       code: string;
       codeVerifier: string;
       refresh?: string;
+      organizationId?: string;
     },
     clientInformation?: ClientInformation
   ): Promise<AuthTokenDetails | string>;
